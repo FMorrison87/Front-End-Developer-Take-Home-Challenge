@@ -1,7 +1,9 @@
 import React from 'react';
 import ReactDOM from 'react-dom/client';
 import './index.css';
-import '@astrouxds/tokens/dist/css/index.css'
+//import '@astrouxds/tokens/dist/css/index.css'
+import '@astrouxds/astro-web-components/dist/astro-web-components/astro-web-components.css'
+import '@astrouxds/react'
 import App from './App';
 import reportWebVitals from './reportWebVitals';
 import {

@@ -11,3 +11,9 @@ code {
   font-family: source-code-pro, Menlo, Monaco, Consolas, 'Courier New',
     monospace;
 }
+
+.status-bar {
+  position: fixed;
+  z-index: 10;
+  margin-bottom: 50px;
+}

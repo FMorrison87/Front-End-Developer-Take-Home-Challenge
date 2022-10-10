@@ -5,38 +5,21 @@
 .status-bar {
   width: 100%;
   display: flex;
-  /* position: fixed;
-  top: 0; */
+  border-bottom: 1px solid white;
 }
 
-.App-logo {
-  height: 40vmin;
-  pointer-events: none;
+.AppHeader {
+  position: fixed;
+  top: 0;
+  z-index: 10;
+ 
 }
 
-@media (prefers-reduced-motion: no-preference) {
-  .App-logo {
-    animation: App-logo-spin infinite 20s linear;
-  }
+.content {
+  margin-top: 96px;
 }
 
-.App-header {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  color: white;
-}
-
-.App-link {
-  color: #61dafb;
-}
-
-@keyframes App-logo-spin {
-  from {
-    transform: rotate(0deg);
-  }
-  to {
-    transform: rotate(360deg);
-  }
+rux-status {
+  padding-right: 10px;
+  padding-top: 2px;
 }
