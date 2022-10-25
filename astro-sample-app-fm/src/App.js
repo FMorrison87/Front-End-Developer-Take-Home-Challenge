@@ -1,19 +1,32 @@
 import './App.css';
 import data from './data.json'
-import {RuxGlobalStatusBar, RuxStatus, RuxTable, RuxTableHeader, RuxTableHeaderCell, RuxTableBody, RuxTableRow, RuxTableCell, RuxTableHeaderRow, RuxButton, RuxCheckbox, RuxMonitoringIcon, RuxDialog} from '@astrouxds/react'
-import { useState, Fragment, useEffect } from 'react';
+import Table from './components/Table'
+import Dialog from './components/Dialog'
+import {RuxGlobalStatusBar, RuxStatus} from '@astrouxds/react'
+import { useState } from 'react';
 
 function App() {
-  const satData = data
 
   const [currentItem, setCurrentItem] = useState({});
   const [processed, setProcessed] = useState([]);
+  const [sortDirection, setSortDirection] = useState('descend');
 
-  const filteredData = satData.filter((data) => {
+  const filteredData = data.filter((data) => {
     return data.alerts[0];
   })
 
-  const [alertData, setAlertData] = useState(filteredData)
+  // Building a new array where 'Alerts' is not nested within each object
+  const newData = filteredData.map(item => {
+      item.alerts.forEach(alert => {
+        item.errorMessage = alert.errorMessage
+        item.errorSeverity = alert.errorSeverity
+        item.errorSeverity = alert.errorSeverity
+        item.errorTime = alert.errorTime
+      })
+      return item
+    })
+
+  const [alertData, setAlertData] = useState(newData)
 
   const processData = (modifiedAlertData) => {
     const processedData = modifiedAlertData.filter(data => data.isProcessed)
@@ -54,146 +67,101 @@ function App() {
     processData(modifiedAlertData)
   }
 
-  //format time
-  const formatDate = (timestamp, year) => {
-    //convert from unix time to milliseconds
-    let date = new Date(timestamp);
-    if (year) {
-      date = new Intl.DateTimeFormat('en-US', {
-        year: '2-digit',
-        month: '2-digit',
-        day: '2-digit',
-        hour: '2-digit',
-        minute: '2-digit',
-        second: '2-digit',
-        hour12: false,
-        timeZone: 'UTC',
-      }).format(date);
-    } else {
-      date = new Intl.DateTimeFormat('en-US', {
-        hour: '2-digit',
-        minute: '2-digit',
-        second: '2-digit',
-        hour12: false,
-        timeZone: 'UTC',
-      }).format(date);
-    }
-    return date;
-  };
+  // function taken from here: https://www.sitepoint.com/sort-an-array-of-objects-in-javascript/ (and then heavily modified)
+  function compareValues(key, order) {
+    return function innerSort(a, b) {
+      if (!a.hasOwnProperty(key) || !b.hasOwnProperty(key)) {
+        // property doesn't exist on either object
+        return 0;
+      }
+      let varA = a[key]
+      let varB = b[key]
+      if (alerts.includes(a[key]) && alerts.includes(b[key])) {
+        switch(a[key]) {
+          case 'off':
+            varA = 0;
+            break
+          case 'standby':
+            varA = 1;
+            break
+          case 'normal':
+            varA = 2;
+              break
+          case 'caution':
+            varA = 3;
+            break
+          case 'serious':
+            varA = 4;
+            break
+          case 'critical':
+            varA = 5;
+            break
+          default:
+            varA = 0;
+            break
+        }
+        switch(b[key]) {
+          case 'off':
+            varB = 0;
+            break
+          case 'standby':
+            varB = 1;
+            break
+          case 'normal':
+            varB = 2;
+              break
+          case 'caution':
+            varB = 3;
+            break
+          case 'serious':
+            varB = 4;
+            break
+          case 'critical':
+            varB = 5;
+            break
+          default:
+            varB = 0;
+            break
+        }
+      } else {
+        varA = (typeof a[key] === 'string')
+        ? a[key].toUpperCase() : a[key];
+        varB = (typeof b[key] === 'string')
+        ? b[key].toUpperCase() : b[key];
+      }
+        
+      let comparison = 0;
+      if (varA > varB) {
+        comparison = 1;
+      } else if (varA < varB) {
+        comparison = -1;
+      }
+      return (
+        (order === 'descend') ? (comparison * -1) : comparison
+      );
+    };
+  }
+
+  function handleArrowClick(event, key, direction) {
+      (direction === 'descend') ? setSortDirection('ascend') : setSortDirection('descend')
+      const modifiedAlertData = alertData.sort(compareValues(key, sortDirection));
+      processData(modifiedAlertData)
+      event.currentTarget.classList.contains('arrow__sort-up') ? event.currentTarget.classList.remove('arrow__sort-up') : event.currentTarget.classList.add('arrow__sort-up')
+  }
   
   return (
     <div className="App" width="100%">
       <header className="AppHeader">
-        <div className="status-bar">
-            <RuxGlobalStatusBar include-icon="true" app-domain="Astro" app-name="FM Sample Dashboard" app-version="1.0 Alpha" menu-icon="apps" username="" app-state-color="" app-state="">
-            </RuxGlobalStatusBar>
-        </div>
+          <RuxGlobalStatusBar include-icon="true" app-domain="Astro" app-name="FM Sample Dashboard" app-version="1.0 Alpha" menu-icon="apps" username="" app-state-color="" app-state="">
+          </RuxGlobalStatusBar>
       </header>
       <div className="content">
-              <RuxTable>
-                <RuxTableHeader>
-                  <RuxTableHeaderRow>
-                    <RuxTableHeaderCell>Satellite Name</RuxTableHeaderCell>
-                    <RuxTableHeaderCell>Contact Name</RuxTableHeaderCell>
-                    <RuxTableHeaderCell>Contact Duration</RuxTableHeaderCell>
-                    <RuxTableHeaderCell>Alert</RuxTableHeaderCell>
-                    <RuxTableHeaderCell>Severity</RuxTableHeaderCell>
-                    <RuxTableHeaderCell>Alert Time</RuxTableHeaderCell>
-                    <RuxTableHeaderCell>Details</RuxTableHeaderCell>
-                    <RuxTableHeaderCell></RuxTableHeaderCell>
-                  </RuxTableHeaderRow>
-                </RuxTableHeader>
-                <RuxTableBody>
-                  {alertData.map((item, index) => {
-                    return (
-                      <Fragment key={index}>
-                      {item.alerts.map((alert, index) => {
-                        return (
-                          <RuxTableRow key={`${item.contactName}-${index}`}>
-                            <RuxTableCell>{item.contactSatellite}</RuxTableCell>
-                            <RuxTableCell>{item.contactName}</RuxTableCell>
-                            <RuxTableCell>{formatDate(item.contactBeginTimestamp)} - {formatDate(item.contactEndTimestamp)}</RuxTableCell>
-                            <RuxTableCell>{alert.errorMessage}</RuxTableCell>
-                            <RuxTableCell>{returnAlertSeverity(alert.errorSeverity)}</RuxTableCell>
-                            <RuxTableCell>{formatDate(alert.errorTime)}</RuxTableCell>
-                            <RuxTableCell>
-                              <RuxButton secondary size={'small'} onClick={() => openDialog(item)}>SHOW DETAILS</RuxButton>
-                            </RuxTableCell>
-                            <RuxTableCell>
-                              <RuxButton size="small" onClick={() => process(item)}>PROCESS ALERT</RuxButton>
-                            </RuxTableCell>
-                          </RuxTableRow>
-                        )
-                      })}
-                      </Fragment>
-                    ) 
-                  })}
-                </RuxTableBody>
-              </RuxTable>
-              <h2>PROCESSED</h2>
+          <Table handleArrowClick={handleArrowClick} sortDirection={sortDirection} alertData={alertData} returnAlertSeverity={returnAlertSeverity} openDialog={openDialog} process={process} />
+              
+          <h2>PROCESSED</h2>
 
-                  <RuxTable>
-                  <RuxTableHeader>
-                    <RuxTableHeaderRow>
-                      <RuxTableHeaderCell>Satellite Name</RuxTableHeaderCell>
-                      <RuxTableHeaderCell>Contact Name</RuxTableHeaderCell>
-                      <RuxTableHeaderCell>Contact Duration</RuxTableHeaderCell>
-                      <RuxTableHeaderCell>Alert</RuxTableHeaderCell>
-                      <RuxTableHeaderCell>Severity</RuxTableHeaderCell>
-                      <RuxTableHeaderCell>Alert Time</RuxTableHeaderCell>
-                      <RuxTableHeaderCell>Details</RuxTableHeaderCell>
-                    </RuxTableHeaderRow>
-                  </RuxTableHeader>
-                  <RuxTableBody>
-                  {processed && processed.map((item, index) => {
-                    return (
-                      <Fragment key={index}>
-                      {item.alerts.map((alert, index) => {
-                        return (
-                          <RuxTableRow key={`${item.contactName}-${index}`}>
-                            <RuxTableCell>{item.contactSatellite}</RuxTableCell>
-                            <RuxTableCell>{item.contactName}</RuxTableCell>
-                            <RuxTableCell>{formatDate(item.contactBeginTimestamp)} - {formatDate(item.contactEndTimestamp)}</RuxTableCell>
-                            <RuxTableCell>{alert.errorMessage}</RuxTableCell>
-                            <RuxTableCell>{returnAlertSeverity(alert.errorSeverity)}</RuxTableCell>
-                            <RuxTableCell>{formatDate(alert.errorTime)}</RuxTableCell>
-                            <RuxTableCell>
-                              <RuxButton secondary size={'small'} onClick={() => openDialog(item)}>SHOW DETAILS</RuxButton>
-                            </RuxTableCell>
-                            <RuxTableCell>
-                            </RuxTableCell>
-                          </RuxTableRow>
-                        )
-                      })}
-                      </Fragment>
-                    ) 
-                  })}
-                    {/* {processed && processed.map((item, index) => {
-                      return (
-                        <RuxTableRow key={index}>
-                          <RuxTableCell>{item.contactSatellite}</RuxTableCell>
-                          <RuxTableCell>{item.contactName}</RuxTableCell>
-                          <RuxTableCell>{new Date(item.contactBeginTimestamp).toTimeString()}</RuxTableCell>
-                          <RuxTableCell>{new Date(item.contactEndTimestamp).toTimeString()}</RuxTableCell>
-                          <RuxTableCell>{item.alerts[0] ? item.alerts[0].errorMessage : ''}</RuxTableCell>
-                          <RuxTableCell>{item.alerts[0] ? returnAlertSeverity(item, item.alerts[0].errorSeverity) : ''}</RuxTableCell>
-                          <RuxTableCell>{item.alerts[0] ? new Date(item.alerts[0].errorTime).toTimeString() : ''}</RuxTableCell>
-                          <RuxTableCell>
-                            {item.alerts[0] ? <RuxButton secondary size={'small'} onClick={() => openDialog(item)}>SHOW DETAILS</RuxButton> : ''}
-                          </RuxTableCell>
-                        </RuxTableRow>
-                      )
-                    })} */}
-                  </RuxTableBody>
-                  </RuxTable>
-              <div>
-                <RuxDialog header="Satellite Error" message="" confirm-text="OK" deny-text="Cancel">
-                  <div style={{'textAlign':'left'}}>
-                    <div><strong>Satellite: </strong>{currentItem.contactSatellite}</div>
-                    <div><strong>Details: </strong>{currentItem.contactDetail}</div>
-                  </div>
-                </RuxDialog>
-              </div>
+          <Table handleArrowClick={handleArrowClick} sortDirection={sortDirection} alertData={processed} returnAlertSeverity={returnAlertSeverity} openDialog={openDialog} process={process} />
+          <Dialog currentItem={currentItem} />
       </div>
     </div>
   );

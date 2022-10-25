@@ -2,7 +2,7 @@
   text-align: center;
 }
 
-.status-bar {
+rux-global-status-bar {
   width: 100%;
   display: flex;
   border-bottom: 1px solid white;
@@ -12,6 +12,7 @@
   position: fixed;
   top: 0;
   z-index: 10;
+  width: 100%;
  
 }
 
@@ -22,4 +23,18 @@
 rux-status {
   padding-right: 10px;
   padding-top: 2px;
+}
+
+rux-table-header-cell {
+ margin-top: auto;
+}
+
+rux-table-header-cell rux-icon {
+  cursor: pointer;
+}
+rux-icon {
+  transition: all 200ms ease-in-out;
+}
+.arrow__sort-up {
+  transform: rotate(180deg);
 }
